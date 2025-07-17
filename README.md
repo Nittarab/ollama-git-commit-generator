@@ -22,15 +22,13 @@ cd ollama-scripts
 
 **Global installation** (recommended):
 ```bash
-# From any git repository
-git add .
+# From any git repository - no need to pre-stage!
 git commit-ai
 ```
 
 **Local installation**:
 ```bash
-# From the script directory
-git add .
+# From the script directory - no need to pre-stage!
 ./git-commit-generator.sh
 ```
 
@@ -43,8 +41,41 @@ alias gcai="git commit-ai"
 
 Then reload and use:
 ```bash
-gcai
+gcai  # No staging required!
 ```
+
+## 👤 Human-in-the-Loop Design
+
+This tool is designed with **multiple human decision points** to ensure you maintain full control:
+
+### 1. **Smart File Staging**
+When unstaged changes are detected:
+- **(a)** Add all changes and continue
+- **(s)** Select files interactively
+- **(m)** 🤖 Let AI suggest optimal commit splitting  
+- **(q)** Quit
+
+### 2. **AI Multi-Commit Oversight**
+When AI suggests multiple commits:
+- **(i)** 👤 **Interactive mode** - Review each commit individually
+- **(c)** Auto-create all suggested commits
+- **(e)** Edit AI suggestions before proceeding
+- **(s)** Switch to manual staging mode
+
+### 3. **Individual Commit Control** (Interactive Mode)
+For each suggested commit:
+- **(y)** Accept and create this commit
+- **(m)** Modify files or message  
+- **(s)** Skip this commit
+- **(q)** Quit multi-commit mode
+
+### 4. **Final Commit Review**
+Before each commit is created:
+- **(c)** Commit with generated message
+- **(e)** Edit the message
+- **(s)** Skip/discard this commit
+
+**You're always in control!** 🎯
 
 ## Features
 
@@ -54,11 +85,14 @@ gcai
 - 🌍 **Global Access**: Install once, use anywhere with `git commit-ai`
 - 🎨 **Interactive**: Clean terminal interface with smart options
 - 🔧 **Flexible**: Both global and local usage modes
+- 🧠 **Smart Staging**: Automatically detects and offers to stage files
+- 🔀 **Multi-Commit AI**: Let AI analyze and suggest optimal commit splitting
+- 📊 **Intelligent Analysis**: Groups related changes for atomic commits
 
 ## Installation Requirements
 
 - [Ollama](https://ollama.ai) installed and running
-- Git repository with staged changes  
+- Git repository (no pre-staging required!)  
 - Bash shell (macOS/Linux)
 - Admin access for global installation (optional)
 
@@ -102,11 +136,15 @@ git commit -m "$commit_msg"
 
 ## How It Works
 
-1. **Analyzes** your staged git changes (`git diff --staged`)
-2. **Splits** large diffs into manageable chunks
-3. **Generates** micro-messages for each chunk using AI
-4. **Combines** them into a cohesive final commit message
-5. **Presents** options to commit, edit, regenerate, or discard
+1. **Smart Detection**: Automatically detects staged/unstaged changes
+2. **Interactive Staging**: Offers to stage files with multiple options:
+   - Add all changes
+   - Select files interactively  
+   - Let AI suggest optimal commit splitting
+3. **AI Analysis**: For large changes, AI analyzes and suggests how to split into logical commits
+4. **Chunk Processing**: Splits large diffs into manageable chunks for analysis
+5. **Message Generation**: Creates conventional commit messages
+6. **Review Options**: Commit, edit, regenerate, or discard
 
 ## Model Details
 
