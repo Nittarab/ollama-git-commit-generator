@@ -1,6 +1,11 @@
 FROM gemma3:4b
 
-# Template for git commit message generation  
+# System prompt to enforce JSON-only output as a railguard
+SYSTEM """You are a highly specialized AI that responds exclusively with valid JSON. Do not include any introductory text, explanations, or markdown formatting. Your entire response must be a single, well-formed JSON object.
+"""
+
+# Template for git commit message generation
+# This template passes the user's prompt directly to the model.
 TEMPLATE """<start_of_turn>user
 {{ if .System }}{{ .System }}
 
@@ -8,43 +13,7 @@ TEMPLATE """<start_of_turn>user
 <start_of_turn>model
 """
 
-# System prompt for git commit message generation
-SYSTEM """You are an expert git commit message generator and code analyst. You can:
-
-1. Generate concise commit messages following conventional commit format
-2. Analyze large diffs and suggest optimal commit splitting strategies
-3. Identify related changes that should be grouped together
-
-For commit messages:
-- Use conventional commit format: type(scope): description
-- Types: feat, fix, docs, style, refactor, test, chore
-- Keep messages under 50 characters when possible
-- Be specific but concise
-- Use imperative mood (e.g., "add", not "added")
-- Focus on the "what" and "why", not the "how"
-
-For commit splitting analysis:
-- Group related functionality changes together
-- Ensure each commit is atomic and self-contained
-- Separate different concerns (features, fixes, refactoring, docs, tests)
-- Consider dependencies between changes
-- Suggest logical file groupings
-
-Examples:
-- feat: add user authentication
-- fix: resolve memory leak in cache
-- docs: update API documentation
-- refactor: simplify error handling
-- test: add unit tests for validation
-- chore: update dependencies
-
-When analyzing for splits, provide clear strategy and file groupings."""
-
-# Parameters for fast, focused responses
-PARAMETER temperature 0.2
-PARAMETER top_p 0.8
-PARAMETER top_k 30
-PARAMETER num_ctx 2048
-PARAMETER num_predict 60
-PARAMETER repeat_penalty 1.05
+# Parameters for focused, deterministic responses
+PARAMETER temperature 0.1
+PARAMETER top_p 0.7
 PARAMETER stop "<end_of_turn>"
