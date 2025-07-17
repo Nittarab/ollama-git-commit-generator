@@ -13,6 +13,21 @@ print_header() {
     echo "====================="
 }
 
+# Extract JSON from markdown code fences
+extract_json() {
+    local input="$1"
+    # Greedily find the largest JSON object in the input.
+    # This is more robust than just looking for markdown fences.
+    if echo "$input" | grep -o '{.*}' | jq . >/dev/null 2>&1; then
+        echo "$input" | grep -o '{.*}' | jq -c . | head -n 1
+    # Fallback for simple cases or when grep fails
+    elif echo "$input" | grep -q '```json'; then
+        echo "$input" | sed -n '/```json/,/```/p' | sed '1d;$d'
+    else
+        echo "$input"
+    fi
+}
+
 check_dependencies() {
     if ! command -v git &> /dev/null; then
         echo "❌ Error: git is not installed."
@@ -41,11 +56,11 @@ analyze_file_change() {
     local diff_content=""
 
     if [ "$file_status" == "UNTRACKED" ]; then
-        diff_content=$(head -n 100 "$file_path")
+        diff_content=$(head -n 200 "$file_path")
     elif [ "$file_status" == "STAGED" ]; then
-        diff_content=$(git diff --staged -- "$file_path")
+        diff_content=$(git diff --staged -- "$file_path" | head -n 200)
     else # UNSTAGED
-        diff_content=$(git diff -- "$file_path")
+        diff_content=$(git diff -- "$file_path" | head -n 200)
     fi
 
     # If diff is empty, no need to analyze
@@ -63,9 +78,13 @@ $diff_content"
     local ai_response
     ai_response=$(echo -e "$analysis_prompt" | ollama run "$MODEL_NAME" 2>/dev/null)
     
+    # Extract JSON from potential markdown and then get the summary
+    local clean_json
+    clean_json=$(extract_json "$ai_response")
+    
     # Extract the summary from the JSON response.
-    if echo "$ai_response" | jq -e .summary > /dev/null 2>&1; then
-        echo "$ai_response" | jq -r .summary
+    if echo "$clean_json" | jq -e .summary > /dev/null 2>&1; then
+        echo "$clean_json" | jq -r .summary
     else
         echo "Could not summarize." # Fallback
     fi
@@ -207,6 +226,9 @@ main() {
     # Step 2: Generate the final plan
     echo "🧠 Generating commit plan from summaries..."
     AI_RESPONSE=$(generate_commit_plan "$ALL_SUMMARIES" "$USER_HINT")
+    
+    # Extract JSON from potential markdown
+    AI_RESPONSE=$(extract_json "$AI_RESPONSE")
 
     if ! echo "$AI_RESPONSE" | jq . > /dev/null 2>&1; then
         echo "❌ Error: AI response is not valid JSON."
@@ -236,6 +258,7 @@ main() {
                 read -r user_message
                 echo "🧠 Generating revised plan..."
                 AI_RESPONSE=$(generate_commit_plan "$ALL_SUMMARIES" "$user_message")
+                AI_RESPONSE=$(extract_json "$AI_RESPONSE")
                 echo "🧠 Revised AI Plan:"
                 echo "─────────────────"
                 echo "$AI_RESPONSE" | jq .
@@ -243,6 +266,7 @@ main() {
             "r")
                 echo "🧠 Regenerating plan..."
                 AI_RESPONSE=$(generate_commit_plan "$ALL_SUMMARIES" "$USER_HINT")
+                AI_RESPONSE=$(extract_json "$AI_RESPONSE")
                 echo "🧠 Regenerated AI Plan:"
                 echo "───────────────────"
                 echo "$AI_RESPONSE" | jq .
