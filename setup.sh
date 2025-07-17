@@ -9,7 +9,15 @@ if ! command -v ollama &> /dev/null; then
     exit 1
 fi
 
-echo "📦 Building custom git-commit-fast model..."
+echo "� Pulling base model (gemma3:4b)..."
+if ollama pull gemma3:4b; then
+    echo "✅ Base model downloaded successfully!"
+else
+    echo "❌ Failed to download base model. Please check your internet connection."
+    exit 1
+fi
+
+echo "�📦 Building custom git-commit-fast model..."
 
 # Build the custom model
 if ollama create git-commit-fast -f Modelfile; then
@@ -57,18 +65,30 @@ if ! ollama list | grep -q "git-commit-fast"; then
     exit 1
 fi
 
-# Get staged diff
-DIFF=$(git diff --staged)
+# Smart staging check
+STAGED_DIFF=$(git diff --staged)
+UNSTAGED_DIFF=$(git diff)
+UNTRACKED_FILES=$(git ls-files --others --exclude-standard)
 
-if [ -z "$DIFF" ]; then
-    echo "⚠️ No changes detected. Please stage your changes first with:"
-    echo "   git add ."
+if [ -n "$STAGED_DIFF" ]; then
+    echo "✅ Found staged changes ready for commit."
+elif [ -z "$UNSTAGED_DIFF" ] && [ -z "$UNTRACKED_FILES" ]; then
+    echo "⚠️ No changes detected in this repository."
     exit 0
+else
+    echo "📋 Found unstaged changes. Adding all files..."
+    git add .
+    STAGED_DIFF=$(git diff --staged)
+    if [ -z "$STAGED_DIFF" ]; then
+        echo "❌ No changes were staged."
+        exit 0
+    fi
+    echo "✅ All changes staged."
 fi
 
 # Generate commit message
 echo "🤖 Analyzing your changes..."
-COMMIT_MESSAGE=$(echo "$DIFF" | ollama run git-commit-fast)
+COMMIT_MESSAGE=$(echo "$STAGED_DIFF" | ollama run git-commit-fast)
 
 # Clean up the message
 COMMIT_MESSAGE=$(echo "$COMMIT_MESSAGE" | sed '/^$/d' | head -n 1)
@@ -152,6 +172,6 @@ fi
 
 echo ""
 echo "💡 Tips:"
-echo "   - Stage your changes first: git add ."
+echo "   - No need to stage files first - the script will handle it!"
 echo "   - Use --help for all options (local script only)"
 echo "   - The model uses Gemma3 4B for fast, accurate results"
