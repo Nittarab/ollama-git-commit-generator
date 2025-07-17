@@ -20,10 +20,12 @@ teardown() {
     echo "console.log('hello');" > test.js
     git add test.js
     
-    # Mock git diff to return test diff
+    # Mock git diff to return test diff content
     function git() {
         if [[ "$1" == "diff" && "$2" == "--staged" ]]; then
-            create_test_diff "simple"
+            cat << 'EOF'
++console.log('hello');
+EOF
         else
             command git "$@"
         fi
@@ -48,7 +50,10 @@ teardown() {
     # Mock git diff for unstaged changes
     function git() {
         if [[ "$1" == "diff" && "$2" != "--staged" ]]; then
-            create_test_diff "complex"
+            cat << 'EOF'
+-console.log('hello');
++console.log('hello world');
+EOF
         else
             command git "$@"
         fi
