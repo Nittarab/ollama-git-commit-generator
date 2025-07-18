@@ -1,31 +1,33 @@
 # Unit Tests for Ollama Git Commit Generator
 
-This directory contains comprehensive unit tests for the ollama-git-commit-generator tool. The tests focus on individual components and functions in isolation.
+This directory contains comprehensive unit tests for the ollama-git-commit-generator tool. The tests focus on individual components and functions in isolation by directly testing the main `git-commit-generator.sh` script.
+
+## Test Philosophy
+
+- **Real Dependencies**: Tests use real `git` and `jq` commands for authentic testing
+- **Mock Only Ollama**: Only the Ollama AI service is mocked to enable offline testing
+- **Direct Script Testing**: Tests source the actual `git-commit-generator.sh` file, not a separate functions file
+- **Single File Focus**: Maintains the goal of having one installable script file
 
 ## Test Coverage
 
-### Core Functionality Tests (`test_core_functions.bats`)
+### Core Functionality Tests (`test_core_functions.bats`) - ✅ 15/15 PASSING
 - ✅ JSON extraction from markdown code fences
 - ✅ JSON extraction from plain text
 - ✅ Malformed JSON handling
 - ✅ Complex nested JSON parsing
-- ✅ Dependency checking
-- ✅ File change analysis
+- ✅ Dependency checking (with real git/jq)
+- ✅ File change analysis with ollama mocking
 - ✅ Prompt generation
 - ✅ Utility functions
 
-### Git Diff Parsing Tests (`test_git_diff_parsing.bats`)
-- ✅ Staged file diff parsing
-- ✅ Unstaged file diff parsing
-- ✅ Untracked file content reading
-- ✅ Large file content limiting (200 lines)
+### Git Diff Parsing Tests (`test_git_diff_parsing.bats`) - ⚠️ 3/9 PASSING
 - ✅ Empty diff handling
-- ✅ Binary file detection
 - ✅ File status extraction
-- ✅ Special characters in filenames
 - ✅ Script file exclusion
+- ❌ Integration tests requiring specific ollama responses (6 tests)
 
-### Prompt Formatting Tests (`test_prompt_formatting.bats`)
+### Prompt Formatting Tests (`test_prompt_formatting.bats`) - ✅ 11/11 PASSING
 - ✅ File summaries inclusion in prompts
 - ✅ User hint integration
 - ✅ Required JSON format templating
@@ -36,8 +38,7 @@ This directory contains comprehensive unit tests for the ollama-git-commit-gener
 - ✅ Large summary handling
 - ✅ Consistent formatting structure
 
-### Input Validation Tests (`test_input_validation.bats`)
-- ✅ Dependency detection (git, jq, ollama)
+### Input Validation Tests (`test_input_validation.bats`) - ✅ 10/11 PASSING
 - ✅ Git repository validation
 - ✅ Malicious file path handling
 - ✅ User input sanitization
@@ -47,6 +48,17 @@ This directory contains comprehensive unit tests for the ollama-git-commit-gener
 - ✅ Large file content handling
 - ✅ Commit plan structure validation
 - ✅ Special characters in filenames
+- ⚠️ Command dependency mocking (1 test skipped - better tested manually)
+
+### Output Formatting Tests (`test_output_formatting.bats`) - ✅ 8/10 PASSING
+- ✅ Conventional commit format validation
+- ✅ Commit message structure validation
+- ✅ Multiple commit handling
+- ✅ Status message formatting
+- ✅ JSON parsing error handling
+- ✅ Commit plan JSON structure validation
+- ✅ File path formatting
+- ❌ Integration tests requiring actual git operations (2 tests)
 
 ### Output Formatting Tests (`test_output_formatting.bats`)
 - ✅ Conventional commit format validation

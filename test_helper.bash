@@ -12,72 +12,13 @@ setup_test_git_repo() {
     git config user.email "test@example.com"
 }
 
-# Mock functions for external dependencies
+# Mock ollama only - git and jq should be real dependencies
 mock_ollama() {
     local response="$1"
     function ollama() {
         echo "$response"
     }
     export -f ollama
-}
-
-mock_git() {
-    local behavior="$1"
-    case "$behavior" in
-        "success")
-            function git() {
-                return 0
-            }
-            ;;
-        "failure")
-            function git() {
-                return 1
-            }
-            ;;
-        "in_repo")
-            function git() {
-                if [[ "$1" == "rev-parse" && "$2" == "--git-dir" ]]; then
-                    return 0
-                fi
-                return 0
-            }
-            ;;
-        "not_in_repo")
-            function git() {
-                if [[ "$1" == "rev-parse" && "$2" == "--git-dir" ]]; then
-                    return 1
-                fi
-                return 0
-            }
-            ;;
-    esac
-    export -f git
-}
-
-mock_jq() {
-    local behavior="$1"
-    case "$behavior" in
-        "success")
-            function jq() {
-                # Simple mock that processes basic JSON
-                if [[ "$1" == "." ]]; then
-                    cat
-                elif [[ "$1" == "-r" && "$2" == ".summary" ]]; then
-                    echo "Test summary"
-                elif [[ "$1" == "-c" && "$2" == "." ]]; then
-                    cat | tr -d '\n' | tr -s ' '
-                else
-                    return 0
-                fi
-            }
-            ;;
-        "failure")
-            function jq() {
-                return 1
-            }
-            ;;
-    esac
-    export -f jq
 }
 
 # Create test files with specific content
@@ -148,7 +89,7 @@ verify_json_structure() {
 
 # Clean up mock functions
 cleanup_mocks() {
-    unset -f ollama git jq
+    unset -f ollama
 }
 
 # Assertion helpers

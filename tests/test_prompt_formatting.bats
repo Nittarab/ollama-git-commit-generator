@@ -4,7 +4,7 @@
 load '../test_helper'
 
 setup() {
-    source "${BATS_TEST_DIRNAME}/../git-commit-generator-functions.sh"
+    source "${BATS_TEST_DIRNAME}/../git-commit-generator.sh"
     export TEST_TEMP_DIR=$(mktemp -d)
 }
 

@@ -5,15 +5,18 @@ load '../test_helper'
 
 # Setup and teardown
 setup() {
-    # Source the functions-only script to access its functions without executing main
-    source "${BATS_TEST_DIRNAME}/../git-commit-generator-functions.sh"
+    # Source the main script to access its functions without executing main
+    source "${BATS_TEST_DIRNAME}/../git-commit-generator.sh"
     
     # Create temporary test directory
     export TEST_TEMP_DIR=$(mktemp -d)
+    cd "$TEST_TEMP_DIR"
+    setup_test_git_repo "$TEST_TEMP_DIR"
 }
 
 teardown() {
     # Clean up temporary directory
+    cd /
     rm -rf "$TEST_TEMP_DIR"
 }
 
@@ -77,20 +80,13 @@ teardown() {
 
 # Test check_dependencies function
 @test "check_dependencies: should pass when all dependencies are available" {
-    # Mock the commands to simulate they exist
-    function git() { return 0; }
-    function jq() { return 0; }
-    function ollama() { return 0; }
-    export -f git jq ollama
+    # Use a real git repository for testing
+    cd "$TEST_TEMP_DIR"
+    setup_test_git_repo "$TEST_TEMP_DIR"
     
-    # Mock git rev-parse to simulate being in a git repo
-    function git() {
-        if [[ "$1" == "rev-parse" ]]; then
-            return 0
-        fi
-        return 0
-    }
-    export -f git
+    # Mock only ollama since git and jq should be real
+    function ollama() { return 0; }
+    export -f ollama
     
     run check_dependencies
     [ "$status" -eq 0 ]
@@ -98,8 +94,12 @@ teardown() {
 
 # Test analyze_file_change function with mocked data
 @test "analyze_file_change: should handle UNTRACKED file status" {
+    # Use a real git repository
+    cd "$TEST_TEMP_DIR"
+    setup_test_git_repo "$TEST_TEMP_DIR"
+    
     # Create a test file
-    test_file="$TEST_TEMP_DIR/test.txt"
+    test_file="test.txt"
     echo "Test file content" > "$test_file"
     
     # Mock ollama command to return a simple JSON response
@@ -114,15 +114,21 @@ teardown() {
 }
 
 @test "analyze_file_change: should handle empty diff gracefully" {
-    # Create an empty test file
-    test_file="$TEST_TEMP_DIR/empty.txt"
-    touch "$test_file"
+    # Use a real git repository
+    cd "$TEST_TEMP_DIR"
+    setup_test_git_repo "$TEST_TEMP_DIR"
     
-    # Mock git diff to return empty
-    function git() {
-        return 0
+    # Create an empty test file and add it to git
+    test_file="empty.txt"
+    touch "$test_file"
+    git add "$test_file"
+    git commit -m "initial commit"
+    
+    # Mock ollama
+    function ollama() {
+        echo '{"summary": "No changes"}'
     }
-    export -f git
+    export -f ollama
     
     result=$(analyze_file_change "$test_file" "STAGED")
     
