@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y jq git
+        
+        # Install bats-core
+        git clone https://github.com/bats-core/bats-core.git /tmp/bats-core
+        cd /tmp/bats-core
+        sudo ./install.sh /usr/local
+    
+    - name: Run tests
+      run: |
+        make test
+        
+    - name: Run linting (if available)
+      run: |
+        if command -v shellcheck >/dev/null 2>&1; then
+          make lint
+        else
+          echo "ShellCheck not available, skipping linting"
+        fi
+      continue-on-error: true

@@ -67,14 +67,7 @@ check-deps:
 test-coverage: test
 	@echo "📊 Test coverage analysis..."
 	@echo "============================"
-	@echo "Core Functions:      15/15 tests ✅"
-	@echo "Input Validation:    13/13 tests ✅"
-	@echo "Prompt Formatting:   11/11 tests ✅"
-	@echo "Git Diff Parsing:     3/9 tests ⚠️ (integration tests)"
-	@echo "Output Formatting:    8/10 tests ⚠️ (integration tests)"
-	@echo ""
-	@echo "Total Unit Tests:    50/58 tests passing (86%)"
-	@echo "All critical core functionality is fully tested"
+	@./tests/run_tests.sh --summary-only
 
 # Lint shell scripts
 lint:

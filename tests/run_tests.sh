@@ -16,8 +16,16 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-echo -e "${BLUE}🧪 Ollama Git Commit Generator - Unit Test Runner${NC}"
-echo "=================================================="
+# Check for summary-only flag
+SUMMARY_ONLY=false
+if [[ "$1" == "--summary-only" ]]; then
+    SUMMARY_ONLY=true
+fi
+
+if [[ "$SUMMARY_ONLY" != "true" ]]; then
+    echo -e "${BLUE}🧪 Ollama Git Commit Generator - Unit Test Runner${NC}"
+    echo "=================================================="
+fi
 
 # Check if bats is available
 if ! command -v bats &> /dev/null; then
@@ -35,23 +43,31 @@ if ! command -v bats &> /dev/null; then
 fi
 
 # Verify dependencies for tests
-echo -e "${BLUE}🔍 Checking test dependencies...${NC}"
+if [[ "$SUMMARY_ONLY" != "true" ]]; then
+    echo -e "${BLUE}🔍 Checking test dependencies...${NC}"
+fi
 
 dependencies=("jq" "git")
 missing_deps=()
 
 for dep in "${dependencies[@]}"; do
     if command -v "$dep" &> /dev/null; then
-        echo -e "${GREEN}✅ $dep found${NC}"
+        if [[ "$SUMMARY_ONLY" != "true" ]]; then
+            echo -e "${GREEN}✅ $dep found${NC}"
+        fi
     else
-        echo -e "${RED}❌ $dep not found${NC}"
+        if [[ "$SUMMARY_ONLY" != "true" ]]; then
+            echo -e "${RED}❌ $dep not found${NC}"
+        fi
         missing_deps+=("$dep")
     fi
 done
 
 if [[ ${#missing_deps[@]} -gt 0 ]]; then
-    echo -e "${RED}❌ Missing dependencies: ${missing_deps[*]}${NC}"
-    echo "Please install missing dependencies before running tests"
+    if [[ "$SUMMARY_ONLY" != "true" ]]; then
+        echo -e "${RED}❌ Missing dependencies: ${missing_deps[*]}${NC}"
+        echo "Please install missing dependencies before running tests"
+    fi
     exit 1
 fi
 
@@ -63,16 +79,19 @@ export PROJECT_ROOT="$PROJECT_ROOT"
 test_files=("$SCRIPT_DIR"/test_*.bats)
 
 if [[ ${#test_files[@]} -eq 0 ]]; then
-    echo -e "${RED}❌ No test files found in $SCRIPT_DIR${NC}"
+    if [[ "$SUMMARY_ONLY" != "true" ]]; then
+        echo -e "${RED}❌ No test files found in $SCRIPT_DIR${NC}"
+    fi
     exit 1
 fi
 
-echo -e "${BLUE}📁 Found ${#test_files[@]} test files:${NC}"
-for file in "${test_files[@]}"; do
-    echo "  - $(basename "$file")"
-done
-
-echo ""
+if [[ "$SUMMARY_ONLY" != "true" ]]; then
+    echo -e "${BLUE}📁 Found ${#test_files[@]} test files:${NC}"
+    for file in "${test_files[@]}"; do
+        echo "  - $(basename "$file")"
+    done
+    echo ""
+fi
 
 # Run tests
 total_tests=0
@@ -82,31 +101,41 @@ test_results=()
 
 for test_file in "${test_files[@]}"; do
     if [[ -f "$test_file" ]]; then
-        echo -e "${BLUE}🧪 Running $(basename "$test_file")...${NC}"
+        if [[ "$SUMMARY_ONLY" != "true" ]]; then
+            echo -e "${BLUE}🧪 Running $(basename "$test_file")...${NC}"
+        fi
         
-        if bats "$test_file"; then
+        if bats "$test_file" >/dev/null 2>&1; then
             # Count tests in this file
             test_count=$(grep -c "^@test" "$test_file" 2>/dev/null || echo "0")
             total_tests=$((total_tests + test_count))
             passed_tests=$((passed_tests + test_count))
             test_results+=("✅ $(basename "$test_file") - All tests passed")
-            echo -e "${GREEN}✅ All tests in $(basename "$test_file") passed${NC}"
+            if [[ "$SUMMARY_ONLY" != "true" ]]; then
+                echo -e "${GREEN}✅ All tests in $(basename "$test_file") passed${NC}"
+            fi
         else
             # Count tests in this file
             test_count=$(grep -c "^@test" "$test_file" 2>/dev/null || echo "0")
             total_tests=$((total_tests + test_count))
             failed_tests=$((failed_tests + test_count))
             test_results+=("❌ $(basename "$test_file") - Some tests failed")
-            echo -e "${RED}❌ Some tests in $(basename "$test_file") failed${NC}"
+            if [[ "$SUMMARY_ONLY" != "true" ]]; then
+                echo -e "${RED}❌ Some tests in $(basename "$test_file") failed${NC}"
+            fi
         fi
-        echo ""
+        if [[ "$SUMMARY_ONLY" != "true" ]]; then
+            echo ""
+        fi
     fi
 done
 
 # Summary
-echo "=================================================="
-echo -e "${BLUE}📊 Test Summary${NC}"
-echo "=================================================="
+if [[ "$SUMMARY_ONLY" != "true" ]]; then
+    echo "=================================================="
+    echo -e "${BLUE}📊 Test Summary${NC}"
+    echo "=================================================="
+fi
 
 for result in "${test_results[@]}"; do
     echo "$result"
@@ -118,11 +147,15 @@ echo -e "Passed: ${GREEN}$passed_tests${NC}"
 echo -e "Failed: ${RED}$failed_tests${NC}"
 
 if [[ $failed_tests -eq 0 ]]; then
-    echo ""
-    echo -e "${GREEN}🎉 All tests passed!${NC}"
+    if [[ "$SUMMARY_ONLY" != "true" ]]; then
+        echo ""
+        echo -e "${GREEN}🎉 All tests passed!${NC}"
+    fi
     exit 0
 else
-    echo ""
-    echo -e "${RED}💥 Some tests failed!${NC}"
+    if [[ "$SUMMARY_ONLY" != "true" ]]; then
+        echo ""
+        echo -e "${RED}💥 Some tests failed!${NC}"
+    fi
     exit 1
 fi

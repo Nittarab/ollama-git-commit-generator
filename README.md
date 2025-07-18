@@ -45,21 +45,5 @@ make test-prompt        # Prompt formatting tests
 ./tests/run_tests.sh
 ```
 
-### Test Coverage
-
-- **59 comprehensive unit tests** covering all core functionality
-- **JSON extraction and parsing** - 5 tests
-- **Git diff parsing** - 9 tests  
-- **Prompt formatting** - 11 tests
-- **Input validation** - 13 tests
-- **Output formatting** - 10 tests
-- **Utility functions** - 11 tests
-
-All tests run in isolation with complete mocking of external dependencies (git, jq, ollama).
-
-See [tests/README.md](tests/README.md) for detailed testing documentation.
-
-
-
 Note:
 this is inspired by https://ollama.com/tavernari/git-commit-message
